@@ -16,6 +16,7 @@ export interface Model {
   maxTokens?: number;
   supportsVision?: boolean;
   supportsFunctionCalling?: boolean;
+  supportsImageGeneration?: boolean;
 }
 
 export interface UserProviderConfig {
@@ -37,6 +38,8 @@ export interface FileAttachment {
   size: number;
   data: string; // base64 encoded data
   url?: string; // optional URL if file is uploaded to storage
+  mimeType: string; // Add mimeType field for better type handling
+  filePath?: string; // optional file path for storage-based files
 }
 
 export interface ChatMessage {
@@ -72,6 +75,28 @@ export interface SaveMessageRequest {
   attachments?: FileAttachment[];
 }
 
+// Simplified image generation types
+export interface ImageGenerationRequest {
+  prompt: string;
+  model: string;
+  userApiKey: string;
+  size?: string;
+  aspectRatio?: string;
+  n?: number;
+}
+
+export interface ImageGenerationResponse {
+  image?: {
+    base64: string;
+    uint8Array: number[];
+  };
+  images?: {
+    base64: string;
+    uint8Array: number[];
+  }[];
+  count: number;
+}
+
 export const PROVIDERS: Provider[] = [
   {
     id: "openai",
@@ -105,6 +130,20 @@ export const PROVIDERS: Provider[] = [
         description: "Fast and cost-effective model",
         maxTokens: 16385,
         supportsFunctionCalling: true,
+      },
+      {
+        id: "dall-e-3",
+        name: "DALL-E 3",
+        provider: "openai",
+        description: "Advanced image generation model",
+        supportsImageGeneration: true,
+      },
+      {
+        id: "dall-e-2",
+        name: "DALL-E 2",
+        provider: "openai",
+        description: "Image generation model",
+        supportsImageGeneration: true,
       },
     ],
   },

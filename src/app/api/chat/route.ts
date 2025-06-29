@@ -28,10 +28,25 @@ function logError(error: any, context: any) {
 function convertAttachmentsToAISDK(attachments: FileAttachment[]) {
   return attachments.map((attachment) => {
     if (attachment.mimeType.startsWith("image/")) {
-      return {
-        type: "image" as const,
-        image: `data:${attachment.mimeType};base64,${attachment.data}`,
-      };
+      // Use URL if available (from Supabase storage), otherwise fall back to base64
+      if (attachment.url) {
+        return {
+          type: "image" as const,
+          image: attachment.url,
+        };
+      } else if (attachment.data) {
+        // Fallback to base64 for backward compatibility
+        return {
+          type: "image" as const,
+          image: `data:${attachment.mimeType};base64,${attachment.data}`,
+        };
+      } else {
+        console.warn("Image attachment has no URL or data:", attachment);
+        return {
+          type: "text" as const,
+          text: `[Image: ${attachment.name} - No data available]`,
+        };
+      }
     } else {
       // For non-image files, we'll include them as text content
       return {
@@ -40,6 +55,52 @@ function convertAttachmentsToAISDK(attachments: FileAttachment[]) {
       };
     }
   });
+}
+
+// Helper function to validate image attachments
+function validateImageAttachments(
+  attachments: FileAttachment[],
+  model: string
+) {
+  const imageAttachments = attachments.filter((att) =>
+    att.mimeType.startsWith("image/")
+  );
+
+  if (imageAttachments.length === 0) {
+    return { valid: true };
+  }
+
+  // Check if model supports vision
+  const visionModels = [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-4-vision-preview",
+    "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-20241022",
+    "claude-3-opus-20240229",
+  ];
+
+  if (!visionModels.includes(model)) {
+    return {
+      valid: false,
+      error: `Model ${model} does not support image analysis. Please use a vision-capable model.`,
+    };
+  }
+
+  // Validate image sizes (max 20MB per image for most models)
+  const maxSize = 20 * 1024 * 1024; // 20MB
+  for (const attachment of imageAttachments) {
+    if (attachment.size > maxSize) {
+      return {
+        valid: false,
+        error: `Image ${attachment.name} is too large (${Math.round(
+          attachment.size / 1024 / 1024
+        )}MB). Maximum size is 20MB.`,
+      };
+    }
+  }
+
+  return { valid: true };
 }
 
 // Test endpoint to verify the API is working
@@ -74,9 +135,10 @@ export async function POST(req: NextRequest) {
       messageCount: body.messages?.length || 0,
       hasAttachments: !!body.attachments,
       attachmentCount: body.attachments?.length || 0,
+      userId: body.userId,
     });
 
-    const { messages, provider, model, userApiKey, attachments } = body;
+    const { messages, provider, model, userApiKey, attachments, userId } = body;
 
     if (!messages || !provider || !model || !userApiKey) {
       const missingParams = {
@@ -111,6 +173,25 @@ export async function POST(req: NextRequest) {
           },
         }
       );
+    }
+
+    // Validate image attachments if present
+    if (attachments && attachments.length > 0) {
+      const validation = validateImageAttachments(attachments, model);
+      if (!validation.valid) {
+        return new Response(
+          JSON.stringify({
+            error: validation.error,
+          }),
+          {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+      }
     }
 
     let modelInstance;

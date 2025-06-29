@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PROVIDERS, Provider, Model, UserProviderConfig } from "@/lib/types";
-import { useProviderConfigStore } from "@/lib/stores/providerConfigStore";
-import { useSelectedProviderStore } from "@/lib/stores/selectedProviderStore";
+import { useConfigurationStore } from "@/lib/stores/configurationStore";
 import { ProviderConfig } from "./ProviderConfig";
 import {
   Settings,
@@ -20,29 +19,23 @@ import {
 export function ProviderSelector() {
   const {
     userProviders,
+    currentProvider,
+    currentModel,
+    selectedProvider,
+    selectedModel,
     addProvider,
     updateProviderConfig,
     removeProvider,
-    getProviderConfig,
-    isProviderConfigured,
-  } = useProviderConfigStore();
-
-  const {
-    selectedProvider,
-    selectedModel,
     selectProvider,
     selectModel,
-    getCurrentProvider,
-    getCurrentModel,
-  } = useSelectedProviderStore();
+    getProviderConfig,
+    isProviderConfigured,
+  } = useConfigurationStore();
 
   const [showConfig, setShowConfig] = useState(false);
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [justConfigured, setJustConfigured] = useState<string | null>(null);
-
-  const currentProvider = getCurrentProvider();
-  const currentModel = getCurrentModel();
 
   const handleProviderSelect = (providerId: string) => {
     console.log("handleProviderSelect", providerId);
@@ -198,7 +191,7 @@ export function ProviderSelector() {
                           onClick={() =>
                             setExpandedProvider(isExpanded ? null : provider.id)
                           }
-                          className="h-6 w-6 p-0"
+                          className="h-6 px-2"
                         >
                           {isExpanded ? (
                             <ChevronUp className="h-3 w-3" />
@@ -209,14 +202,8 @@ export function ProviderSelector() {
                       </div>
                     </CardTitle>
                   </CardHeader>
-
                   {isExpanded && (
-                    <CardContent className="pt-0 space-y-3">
-                      <p className="text-xs text-gray-600">
-                        {provider.description}
-                      </p>
-
-                      {/* Provider Configuration */}
+                    <CardContent className="pt-0">
                       <ProviderConfig
                         provider={provider}
                         currentConfig={getProviderConfig(provider.id)}
@@ -226,7 +213,7 @@ export function ProviderSelector() {
 
                       {/* Model Selection */}
                       {isConfigured && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 mt-3">
                           <label className="block text-xs font-medium text-gray-700">
                             Select Model
                           </label>

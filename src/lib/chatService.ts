@@ -143,6 +143,8 @@ export class ChatService {
       threadId: request.threadId,
       role: request.role,
       contentLength: request.content.length,
+      hasAttachments: !!request.attachments,
+      attachmentCount: request.attachments?.length || 0,
     });
 
     const { data, error } = await this.supabase

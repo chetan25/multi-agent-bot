@@ -7,7 +7,7 @@ interface ChatThreadState {
   // State
   threads: ChatThread[];
   currentThread: ChatThread | null;
-  currentMessages: ChatMessage[];
+  currentMessages: ChatMessage[]; // Not persisted - always fetched fresh from server
   loading: boolean;
   error: string | null;
 
@@ -73,7 +73,7 @@ export const useChatThreadStore = create<ChatThreadState>()(
         }
       },
 
-      // Load a specific thread and its messages
+      // Load a specific thread and its messages (always fetch fresh)
       loadThread: async (threadId: string) => {
         set({ loading: true, error: null });
         try {
@@ -100,7 +100,7 @@ export const useChatThreadStore = create<ChatThreadState>()(
         }
       },
 
-      // Save a message to the current thread
+      // Save a message to the current thread (don't persist locally)
       saveMessage: async (message: Omit<ChatMessage, "id" | "createdAt">) => {
         const { currentThread } = get();
         if (!currentThread) {
@@ -116,6 +116,7 @@ export const useChatThreadStore = create<ChatThreadState>()(
             attachments: message.attachments,
           });
 
+          // Update local state with the saved message (but don't persist)
           set((state) => ({
             currentMessages: [...state.currentMessages, savedMessage],
             threads: state.threads.map((thread) =>
@@ -212,10 +213,37 @@ export const useChatThreadStore = create<ChatThreadState>()(
     }),
     {
       name: "chat-thread-store",
+      version: 3,
       partialize: (state) => ({
         threads: state.threads,
         currentThread: state.currentThread,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          console.log("🔄 Chat thread store rehydrated:", {
+            threadCount: state.threads.length,
+            currentThread: state.currentThread?.threadId,
+          });
+
+          state.currentMessages = [];
+        }
+      },
+      migrate: (persistedState: any, version: number) => {
+        console.log("🔄 Migrating chat thread store from version:", version);
+
+        if (version < 3) {
+          console.log(
+            "🔄 Migrating from version that stored messages - clearing messages for fresh fetch"
+          );
+
+          return {
+            threads: persistedState.threads || [],
+            currentThread: persistedState.currentThread || null,
+          };
+        }
+
+        return persistedState;
+      },
     }
   )
 );

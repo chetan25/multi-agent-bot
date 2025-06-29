@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileAttachment } from "@/lib/types";
-import { Upload, X, Image, File, FileText } from "lucide-react";
+import { Upload, X, Image, File, FileText, Loader2 } from "lucide-react";
+import { imageUploadService } from "@/lib/imageUploadService";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FileUploadProps {
   onFilesSelected: (files: FileAttachment[]) => void;
@@ -17,15 +19,21 @@ interface FileUploadProps {
 export function FileUpload({
   onFilesSelected,
   maxFiles = 5,
-  maxFileSize = 10, // 10MB default
-  acceptedTypes = ["image/*", "text/*", "application/pdf"],
+  maxFileSize = 20, // 20MB default
+  acceptedTypes = ["image/*"],
   disabled = false,
 }: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   const processFiles = async (files: FileList): Promise<FileAttachment[]> => {
+    if (!user?.id) {
+      throw new Error("User must be authenticated to upload files");
+    }
+
     const processedFiles: FileAttachment[] = [];
 
     for (let i = 0; i < Math.min(files.length, maxFiles); i++) {
@@ -52,45 +60,53 @@ export function FileUpload({
         continue;
       }
 
+      // Validate image file
+      const validation = imageUploadService.validateImageFile(file);
+      if (!validation.valid) {
+        alert(validation.error);
+        continue;
+      }
+
       try {
-        const base64Data = await fileToBase64(file);
-        const attachment: FileAttachment = {
-          id: `${Date.now()}-${i}`,
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          data: base64Data,
-          mimeType: file.type,
-        };
-        processedFiles.push(attachment);
+        // Upload to Supabase and get FileAttachment
+        const uploadedAttachment = await imageUploadService.uploadImage(
+          file,
+          user.id
+        );
+
+        // Use the uploaded attachment directly
+        processedFiles.push(uploadedAttachment);
       } catch (error) {
         console.error("Error processing file:", error);
-        alert(`Error processing file ${file.name}`);
+        alert(
+          `Error processing file ${file.name}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }
 
     return processedFiles;
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleFileSelect = async (files: FileList) => {
-    const processedFiles = await processFiles(files);
-    const newFiles = [...selectedFiles, ...processedFiles].slice(0, maxFiles);
-    setSelectedFiles(newFiles);
-    onFilesSelected(newFiles);
+    if (!user?.id) {
+      alert("Please sign in to upload files");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const processedFiles = await processFiles(files);
+      const newFiles = [...selectedFiles, ...processedFiles].slice(0, maxFiles);
+      setSelectedFiles(newFiles);
+      onFilesSelected(newFiles);
+    } catch (error) {
+      console.error("Error handling file selection:", error);
+      alert("Failed to process files. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -137,6 +153,17 @@ export function FileUpload({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  if (!user?.id) {
+    return (
+      <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-300 bg-gray-50">
+        <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+        <p className="text-sm text-gray-600 mb-1">
+          Please sign in to upload files
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* File Upload Area */}
@@ -145,23 +172,36 @@ export function FileUpload({
           dragActive
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        } ${
+          disabled || isUploading
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer"
+        }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => !disabled && fileInputRef.current?.click()}
+        onClick={() =>
+          !disabled && !isUploading && fileInputRef.current?.click()
+        }
       >
-        <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-        <p className="text-sm text-gray-600 mb-1">
-          Drag and drop files here, or click to select
-        </p>
-        <p className="text-xs text-gray-500">
-          Max {maxFiles} files, {maxFileSize}MB each
-        </p>
-        <p className="text-xs text-gray-500">
-          Supported: Images, Text files, PDFs
-        </p>
+        {isUploading ? (
+          <>
+            <Loader2 className="h-8 w-8 mx-auto mb-2 text-blue-500 animate-spin" />
+            <p className="text-sm text-gray-600 mb-1">Uploading files...</p>
+          </>
+        ) : (
+          <>
+            <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-600 mb-1">
+              Drag and drop images here, or click to select
+            </p>
+            <p className="text-xs text-gray-500">
+              Max {maxFiles} files, {maxFileSize}MB each
+            </p>
+            <p className="text-xs text-gray-500">Supported: Images only</p>
+          </>
+        )}
       </div>
 
       <input
@@ -171,7 +211,7 @@ export function FileUpload({
         accept={acceptedTypes.join(",")}
         onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
         className="hidden"
-        disabled={disabled}
+        disabled={disabled || isUploading}
       />
 
       {/* Selected Files */}
@@ -194,6 +234,11 @@ export function FileUpload({
                       <p className="text-xs text-gray-500">
                         {formatFileSize(file.size)}
                       </p>
+                      {file.url && (
+                        <p className="text-xs text-blue-600">
+                          ✓ Uploaded to cloud
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Button

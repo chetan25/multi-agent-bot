@@ -17,7 +17,7 @@ export function ChatHeader({
   currentThreadTitle,
 }: ChatHeaderProps) {
   return (
-    <div className="flex items-center justify-between p-4 border-b bg-white">
+    <div className="sticky top-[88px] z-20 flex items-center justify-between p-4 border-b bg-white/95 backdrop-blur-sm shadow-sm">
       {/* Left side - Menu button and title */}
       <div className="flex items-center gap-3">
         <Button

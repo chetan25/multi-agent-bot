@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileAttachment } from "@/lib/types";
 import { Upload, X, Image, File, FileText, Loader2 } from "lucide-react";
 import { imageUploadService } from "@/lib/imageUploadService";
-import { useAuth } from "@/hooks/useAuth";
+import { useSessionManager } from "@/lib/sessionManager";
 
 interface FileUploadProps {
   onFilesSelected: (files: FileAttachment[]) => void;
@@ -27,7 +27,7 @@ export function FileUpload({
   const [selectedFiles, setSelectedFiles] = useState<FileAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { user } = useSessionManager();
 
   const processFiles = async (files: FileList): Promise<FileAttachment[]> => {
     if (!user?.id) {

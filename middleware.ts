@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function middleware(req: NextRequest) {
   let supabaseResponse = NextResponse.next({
-    request,
+    request: req,
   });
 
   const supabase = createServerClient(
@@ -12,14 +13,14 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll();
+          return req.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
+            req.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
-            request,
+            request: req,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -29,25 +30,38 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
+  // Refresh session if expired - required for Server Components
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  // If there's no user and the user is trying to access a protected route,
-  // redirect them to the sign-in page
-  const protectedRoutes = ["/integrations", "/profile"];
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    "/integrations",
+    "/integrations/voice-drive",
+    "/integrations/chat",
+    "/profile",
+    // Add other protected routes here
+  ];
+
   const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    req.nextUrl.pathname.startsWith(route)
   );
 
-  if (!user && isProtectedRoute) {
-    const redirectUrl = new URL("/signin", request.url);
-    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
+  // If accessing a protected route without authentication, redirect to signin
+  if (isProtectedRoute && !session) {
+    const redirectUrl = new URL("/signin", req.url);
+    redirectUrl.searchParams.set("redirect", req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // If accessing signin/signup while authenticated, redirect to home
+  if (
+    session &&
+    (req.nextUrl.pathname.startsWith("/signin") ||
+      req.nextUrl.pathname.startsWith("/signup"))
+  ) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return supabaseResponse;
@@ -57,11 +71,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

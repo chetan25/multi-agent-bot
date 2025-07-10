@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bot, Settings, CheckCircle, Loader2 } from "lucide-react";
 import { ProviderSelector } from "./ProviderSelector";
 import { useConfigurationStore } from "@/lib/stores/configurationStore";
-import { useAuth } from "@/hooks/useAuth";
+import { useSessionManager } from "@/lib/sessionManager";
 
 interface ConfigurationComponentProps {
   onConfigurationComplete?: () => void;
@@ -15,7 +15,7 @@ interface ConfigurationComponentProps {
 export function ConfigurationComponent({
   onConfigurationComplete,
 }: ConfigurationComponentProps) {
-  const { user } = useAuth();
+  const { user } = useSessionManager();
   const {
     userProviders,
     currentProvider,

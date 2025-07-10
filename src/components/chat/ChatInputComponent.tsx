@@ -217,7 +217,11 @@ export function ChatInputComponent({
               chatReady
                 ? mode === "chat"
                   ? supportsVision
-                    ? "Type your message or attach images..."
+                    ? supportsImageGeneration
+                      ? "Type your message, attach images, or ask to generate images..."
+                      : "Type your message or attach images..."
+                    : supportsImageGeneration
+                    ? "Type your message or ask to generate images..."
                     : "Type your message..."
                   : "Enter a prompt to generate images..."
                 : "Input will be available after configuration..."
@@ -250,14 +254,22 @@ export function ChatInputComponent({
         </div>
 
         {chatReady && (
-          <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-            <CheckCircle className="h-3 w-3" />
-            {mode === "chat"
-              ? `Chat is ready! ${
-                  supportsVision ? "You can send text and images." : ""
-                }`
-              : "Image generation is ready! Click the image icon to generate images."}
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-green-600 flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" />
+              {mode === "chat"
+                ? `Chat is ready! ${
+                    supportsVision ? "You can send text and images." : ""
+                  }`
+                : "Image generation is ready! Click the image icon to generate images."}
+            </p>
+            {mode === "chat" && supportsImageGeneration && (
+              <p className="text-xs text-blue-600">
+                💡 Tip: Try saying "generate an image of..." or "create a
+                picture of..." to generate images directly in chat!
+              </p>
+            )}
+          </div>
         )}
       </form>
     </>

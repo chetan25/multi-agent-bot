@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { ChatMessage } from "@/lib/types";
 
@@ -50,6 +50,30 @@ export function useChatSync({
     attachments: message.attachments,
   });
 
+  // Custom chat configuration with image handling
+  const customChatConfig = chatConfig
+    ? {
+        ...chatConfig,
+        onFinish: (message: any) => {
+          // Check if this was an image generation request by looking at the message content
+          const isImageGenerationRequest =
+            (message.content &&
+              message.content.includes("Generated") &&
+              message.content.includes("image")) ||
+            (message.content.includes("image") &&
+              message.content.includes("based on your request"));
+
+          if (isImageGenerationRequest) {
+            // This was an image generation response, handle it specially
+            console.log("Image generation completed:", message);
+          } else {
+            // Regular text generation
+            console.log("Chat stream finished:", message);
+          }
+        },
+      }
+    : undefined;
+
   // Always call useChat to avoid React hooks violation
   const {
     messages,
@@ -60,20 +84,56 @@ export function useChatSync({
     error,
     setMessages,
   } = useChat(
-    chatConfig || {
+    customChatConfig || {
       api: "/api/chat",
-      id: "fallback-chat",
+      id: currentThread?.threadId || "fallback-chat",
       body: {},
+      key: currentThread?.threadId || "fallback-chat",
     }
   );
 
   // Sync currentMessages to useChat when they change
   useEffect(() => {
-    if (messagesReady && currentMessages && setMessages && !isThreadSwitching) {
+    if (messagesReady && currentMessages && setMessages) {
       const aiMessages = convertToAIMessages(currentMessages);
+      console.log("🔄 Syncing database messages to useChat:", {
+        currentMessagesCount: currentMessages.length,
+        aiMessagesCount: aiMessages.length,
+        messagesReady,
+        isThreadSwitching,
+      });
       setMessages(aiMessages);
     }
   }, [currentMessages, messagesReady, setMessages, isThreadSwitching]);
+
+  // Filter out duplicate messages to prevent React key conflicts
+  useEffect(() => {
+    if (messages && messages.length > 0 && setMessages) {
+      const seenIds = new Set<string>();
+      const filteredMessages = messages.filter((message) => {
+        // If we've seen this ID before, filter it out
+        if (seenIds.has(message.id)) {
+          console.log(
+            "🚫 Filtering out duplicate message with ID:",
+            message.id
+          );
+          return false;
+        }
+        seenIds.add(message.id);
+        return true;
+      });
+
+      // Only update if we actually filtered something out
+      if (filteredMessages.length !== messages.length) {
+        console.log(
+          `Filtered ${
+            messages.length - filteredMessages.length
+          } duplicate messages`
+        );
+        setMessages(filteredMessages);
+      }
+    }
+  }, [messages, setMessages]);
 
   // Filter out duplicate user messages with attachments immediately
   useEffect(() => {
@@ -205,8 +265,9 @@ export function useChatSync({
                   });
               }
             }
-          }, 1000);
+          }, 1000); // Wait 1 second after streaming stops
         } else {
+          // Message is complete, save immediately
           const messageId = `assistant-${lastMessage.content}`;
           if (!savedMessageIds.current.has(messageId)) {
             savedMessageIds.current.add(messageId);
@@ -222,31 +283,45 @@ export function useChatSync({
     }
   }, [
     messages,
+    currentMessages,
     currentThread,
     user?.id,
     saveMessage,
-    chatLoadingFromHook,
-    currentMessages,
     isLoadingMessages,
     isThreadSwitching,
+    chatLoadingFromHook,
   ]);
 
-  // Cleanup timeout on unmount
+  // Reset state when thread changes
   useEffect(() => {
-    return () => {
+    if (isThreadSwitching) {
+      console.log("🔄 Resetting chat sync state due to thread switch");
+      savedMessageIds.current.clear();
+      lastMessageLength.current = 0;
       if (streamingTimeoutRef.current) {
         clearTimeout(streamingTimeoutRef.current);
       }
-    };
-  }, []);
+    }
+  }, [isThreadSwitching]);
 
-  // Reset state when switching threads
+  // Reset state when currentThread changes
+  useEffect(() => {
+    console.log("🔄 Thread changed, resetting chat sync state:", {
+      currentThreadId: currentThread?.threadId,
+      isThreadSwitching,
+    });
+    savedMessageIds.current.clear();
+    lastMessageLength.current = 0;
+    if (streamingTimeoutRef.current) {
+      clearTimeout(streamingTimeoutRef.current);
+    }
+  }, [currentThread?.threadId]);
+
   const resetSyncState = () => {
     savedMessageIds.current.clear();
     lastMessageLength.current = 0;
     if (streamingTimeoutRef.current) {
       clearTimeout(streamingTimeoutRef.current);
-      streamingTimeoutRef.current = null;
     }
   };
 

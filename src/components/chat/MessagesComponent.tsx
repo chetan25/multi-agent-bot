@@ -66,9 +66,9 @@ export function MessagesComponent({
           )}
         </div>
       ) : (
-        messages.map((message) => (
+        messages.map((message, index) => (
           <div
-            key={message.id}
+            key={`${message.id}-${index}`}
             className={`flex gap-3 ${
               message.role === "user" ? "justify-end" : "justify-start"
             }`}

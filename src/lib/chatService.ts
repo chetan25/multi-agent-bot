@@ -1,4 +1,4 @@
-import { createClient } from "./supabase-client";
+import { supabase } from "./supabase-client";
 import {
   ChatThread,
   ChatMessage,
@@ -7,7 +7,7 @@ import {
 } from "./types";
 
 export class ChatService {
-  private supabase = createClient();
+  private supabase = supabase;
 
   // Create a new chat thread
   async createThread(request: CreateThreadRequest): Promise<ChatThread> {

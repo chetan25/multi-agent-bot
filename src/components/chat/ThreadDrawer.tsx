@@ -17,7 +17,7 @@ import {
   Hash,
 } from "lucide-react";
 import { useChatThreadStore } from "@/lib/stores/chatThreadStore";
-import { useAuth } from "@/hooks/useAuth";
+import { useSessionManager } from "@/lib/sessionManager";
 import { ChatThread } from "@/lib/types";
 
 interface ThreadDrawerProps {
@@ -33,7 +33,7 @@ export function ThreadDrawer({
   onThreadSelect,
   onCreateNewThread,
 }: ThreadDrawerProps) {
-  const { user } = useAuth();
+  const { user } = useSessionManager();
   const {
     threads,
     currentThread,

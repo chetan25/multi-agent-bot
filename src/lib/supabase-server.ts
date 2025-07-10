@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+// Create a Supabase client for server-side operations
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
@@ -26,4 +27,37 @@ export async function createServerSupabaseClient() {
       },
     }
   );
+}
+
+// Helper function to get authenticated user
+export async function getAuthenticatedUser() {
+  const supabase = await createServerSupabaseClient();
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Unauthorized");
+  }
+
+  return user;
+}
+
+// Helper function to get user's Google tokens
+export async function getUserGoogleTokens(userId: string) {
+  const supabase = await createServerSupabaseClient();
+
+  const { data: tokens, error } = await supabase
+    .from("google_tokens")
+    .select("refresh_token, access_token, token_expiry")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !tokens?.refresh_token) {
+    throw new Error("Google Drive not connected");
+  }
+
+  return tokens;
 }

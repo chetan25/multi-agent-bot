@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { useSessionManager } from "@/lib/sessionManager";
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +17,7 @@ const protectedNavLinks = [
 ];
 
 export function Header() {
-  const { user, signOut, isAuthenticated, loading } = useAuth();
+  const { user, signOut, isAuthenticated, loading } = useSessionManager();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const pathname = usePathname();

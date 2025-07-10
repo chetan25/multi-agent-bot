@@ -1,8 +1,8 @@
-import { createClient } from "./supabase-client";
+import { supabase } from "./supabase-client";
 import { FileAttachment } from "./types";
 
 export class ImageUploadService {
-  private supabase = createClient();
+  private supabase = supabase;
 
   /**
    * Upload an image file to Supabase storage

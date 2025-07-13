@@ -265,8 +265,9 @@ export function ChatInputComponent({
             </p>
             {mode === "chat" && supportsImageGeneration && (
               <p className="text-xs text-blue-600">
-                💡 Tip: Try saying "generate an image of..." or "create a
-                picture of..." to generate images directly in chat!
+                💡 Tip: Try saying &quot;generate an image of...&quot; or
+                &quot;create a picture of...&quot; to generate images directly
+                in chat!
               </p>
             )}
           </div>

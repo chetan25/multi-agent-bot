@@ -4,11 +4,12 @@ import { GoogleDriveService } from "@/lib/googleDriveService";
 // GET - Read document content
 export async function GET(
   request: NextRequest,
-  { params }: { params: { documentId: string } }
+  { params }: { params: Promise<{ documentId: string }> }
 ) {
   try {
+    const { documentId } = await params;
     const driveService = new GoogleDriveService();
-    const document = await driveService.readDocument(params.documentId);
+    const document = await driveService.readDocument(documentId);
 
     return NextResponse.json(document);
   } catch (error) {
@@ -36,9 +37,10 @@ export async function GET(
 // PUT - Update document content
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { documentId: string } }
+  { params }: { params: Promise<{ documentId: string }> }
 ) {
   try {
+    const { documentId } = await params;
     const { content } = await request.json();
 
     if (!content) {
@@ -49,7 +51,7 @@ export async function PUT(
     }
 
     const driveService = new GoogleDriveService();
-    await driveService.updateDocument(params.documentId, content);
+    await driveService.updateDocument(documentId, content);
 
     return NextResponse.json({ success: true });
   } catch (error) {

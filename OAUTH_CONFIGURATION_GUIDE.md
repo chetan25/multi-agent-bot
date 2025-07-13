@@ -23,7 +23,7 @@ Add these redirect URIs to your Google OAuth console:
 #### **For Development (HTTP)**
 
 ```
-http://localhost:3000/api/google/callback
+https://localhost:3000/api/google/callback
 ```
 
 #### **For Development (HTTPS)**

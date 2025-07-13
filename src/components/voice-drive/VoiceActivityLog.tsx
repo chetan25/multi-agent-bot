@@ -52,7 +52,7 @@ export function VoiceActivityLog() {
               account first.
             </p>
             <div className="text-xs text-gray-500">
-              Once connected, you'll see:
+              Once connected, you&apos;ll see:
               <ul className="mt-2 space-y-1">
                 <li>• Recent voice commands</li>
                 <li>• Command execution status</li>
@@ -80,7 +80,7 @@ export function VoiceActivityLog() {
             <Mic className="h-4 w-4 text-green-600" />
             <div className="flex-1">
               <p className="text-sm font-medium">
-                "Upload the presentation file"
+                &quot;Upload the presentation file&quot;
               </p>
               <p className="text-xs text-gray-500">2 minutes ago • Success</p>
             </div>
@@ -89,7 +89,7 @@ export function VoiceActivityLog() {
             <Search className="h-4 w-4 text-blue-600" />
             <div className="flex-1">
               <p className="text-sm font-medium">
-                "Search for budget documents"
+                &quot;Search for budget documents&quot;
               </p>
               <p className="text-xs text-gray-500">
                 5 minutes ago • Found 3 files
@@ -100,7 +100,7 @@ export function VoiceActivityLog() {
             <FolderOpen className="h-4 w-4 text-yellow-600" />
             <div className="flex-1">
               <p className="text-sm font-medium">
-                "Create a new folder called Projects"
+                &quot;Create a new folder called Projects&quot;
               </p>
               <p className="text-xs text-gray-500">10 minutes ago • Success</p>
             </div>

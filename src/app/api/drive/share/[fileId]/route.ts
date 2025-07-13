@@ -3,9 +3,10 @@ import { GoogleDriveService } from "@/lib/googleDriveService";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params;
     const { email, role = "reader" } = await request.json();
 
     if (!email) {
@@ -16,7 +17,7 @@ export async function POST(
     }
 
     const driveService = new GoogleDriveService();
-    await driveService.shareFile(params.fileId, email, role);
+    await driveService.shareFile(fileId, email, role);
 
     return NextResponse.json({ success: true });
   } catch (error) {

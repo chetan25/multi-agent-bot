@@ -98,7 +98,7 @@ function IntegrationsContent() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              We're working on more exciting integrations. Stay tuned for
+              We&apos;re working on more exciting integrations. Stay tuned for
               updates!
             </p>
             <Button className="w-full" disabled>

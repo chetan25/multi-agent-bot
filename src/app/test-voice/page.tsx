@@ -71,11 +71,11 @@ function TestVoiceContent() {
                     Try These Commands:
                   </h4>
                   <ul className="text-sm text-green-800 space-y-1">
-                    <li>• "Create a new folder called Projects"</li>
-                    <li>• "Search for documents about budget"</li>
-                    <li>• "Upload a new file"</li>
-                    <li>• "Share the presentation file"</li>
-                    <li>• "Delete old files"</li>
+                    <li>• &quot;Create a new folder called Projects&quot;</li>
+                    <li>• &quot;Search for documents about budget&quot;</li>
+                    <li>• &quot;Upload a new file&quot;</li>
+                    <li>• &quot;Share the presentation file&quot;</li>
+                    <li>• &quot;Delete old files&quot;</li>
                   </ul>
                 </div>
               </div>

@@ -164,7 +164,7 @@ export function FileBrowser() {
               first.
             </p>
             <div className="text-xs text-gray-500">
-              Once connected, you'll be able to:
+              Once connected, you&apos;ll be able to:
               <ul className="mt-2 space-y-1">
                 <li>• Browse your Google Drive files</li>
                 <li>• Search through documents</li>

@@ -4,11 +4,12 @@ import { GoogleDriveService } from "@/lib/googleDriveService";
 // GET - Get file details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params;
     const driveService = new GoogleDriveService();
-    const file = await driveService.getFile(params.fileId);
+    const file = await driveService.getFile(fileId);
 
     return NextResponse.json(file);
   } catch (error) {
@@ -33,11 +34,12 @@ export async function GET(
 // DELETE - Delete file
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
+    const { fileId } = await params;
     const driveService = new GoogleDriveService();
-    await driveService.deleteFile(params.fileId);
+    await driveService.deleteFile(fileId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

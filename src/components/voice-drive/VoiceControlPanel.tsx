@@ -77,11 +77,11 @@ export function VoiceControlPanel({ onMicClick }: { onMicClick?: () => void }) {
           <div className="space-y-2 opacity-50">
             <h4 className="font-medium text-sm">Voice commands (disabled):</h4>
             <ul className="text-xs text-gray-600 space-y-1">
-              <li>• "Upload a new file"</li>
-              <li>• "Search for documents"</li>
-              <li>• "Create a new folder"</li>
-              <li>• "Share the budget file"</li>
-              <li>• "Delete old files"</li>
+              <li>• &quot;Upload a new file&quot;</li>
+              <li>• &quot;Search for documents&quot;</li>
+              <li>• &quot;Create a new folder&quot;</li>
+              <li>• &quot;Share the budget file&quot;</li>
+              <li>• &quot;Delete old files&quot;</li>
             </ul>
           </div>
         </CardContent>
@@ -202,11 +202,11 @@ export function VoiceControlPanel({ onMicClick }: { onMicClick?: () => void }) {
         <div className="space-y-2">
           <h4 className="font-medium text-sm">Try saying:</h4>
           <ul className="text-xs text-gray-600 space-y-1">
-            <li>• "Upload a new file"</li>
-            <li>• "Search for documents"</li>
-            <li>• "Create a new folder"</li>
-            <li>• "Share the budget file"</li>
-            <li>• "Delete old files"</li>
+            <li>• &quot;Upload a new file&quot;</li>
+            <li>• &quot;Search for documents&quot;</li>
+            <li>• &quot;Create a new folder&quot;</li>
+            <li>• &quot;Share the budget file&quot;</li>
+            <li>• &quot;Delete old files&quot;</li>
           </ul>
         </div>
       </CardContent>
